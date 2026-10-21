@@ -1,0 +1,17 @@
+## Interface: 120000, 120001, 120005, 120007, 120100, 120105, 16001
+## Title: |cff0cd29fEllesmereUI|r Profiles
+## Category: |cff0cd29fEllesmere|rUI
+## Group: EllesmereUI
+## Notes: Saves your action bars, macros, key bindings, game settings and ForeverAuras auras and loads them on another character or account.
+## Author: Dworak
+## Version: 9.6.1
+## Dependencies: EllesmereUI, EllesmereUIDworak
+## OptionalDeps: EllesmereUIActionBars
+## SavedVariables: EllesmereUIBarProfilesDB
+## IconTexture: Interface\AddOns\EllesmereUI\media\eg-logo.tga
+
+# Dworak > Profiles (tabs: Action Bars, Game Settings, ForeverAuras) in the EllesmereUI panel (registered through EllesmereUIDworak)
+EllesmereUIBarProfiles.lua
+EllesmereUIBarProfiles_Options.lua
+EllesmereUIBarProfiles_GameSettings.lua
+EllesmereUIBarProfiles_ForeverAuras.lua
