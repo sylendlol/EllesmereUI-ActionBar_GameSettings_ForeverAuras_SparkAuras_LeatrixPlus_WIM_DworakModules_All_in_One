@@ -1,5 +1,10 @@
 # EllesmereUI Profiles
 
+<img width="1372" height="997" alt="image" src="https://github.com/user-attachments/assets/73f9f020-09ca-461b-81bb-abe9496191cb" />
+<img width="1375" height="997" alt="image" src="https://github.com/user-attachments/assets/a0fff417-e381-4dd1-8728-1f3dd155833c" />
+<img width="1379" height="991" alt="image" src="https://github.com/user-attachments/assets/94adfc7f-4b5e-44eb-bfba-61624ce1c0aa" />
+
+
 Save your setup once and load it on any other character or account: action bars, macros, key bindings, the game's own settings and all your ForeverAuras auras.
 Built as a module for the **Dworak** section of [EllesmereUI](https://www.curseforge.com/wow/addons/ellesmereui).
 
