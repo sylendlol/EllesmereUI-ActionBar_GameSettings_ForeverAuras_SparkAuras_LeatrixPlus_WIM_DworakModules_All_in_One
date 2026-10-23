@@ -88,7 +88,8 @@ Both are WeakAuras-style addons, and each has its own tab that works the same wa
   - Game Settings are saved as a set **and loaded**, with the Game Settings tab's Load Options.
   - Auras are written like their own tabs do (*If An Aura Already Exists* from those tabs).
   - Leatrix Plus, WIM and Dworak module settings are replaced like on their own tabs.
-- The UI **reloads once, at the very end**. If anything didn't work (an addon missing, a damaged part, a game setting the game refused or one you have to set by hand), a **separate window** lists it first, with a **Reload UI** button. Nothing goes to chat.
+- At the end a **separate window** lists what was imported and anything that didn't work (an addon missing, a damaged part, a game setting the game refused or one you have to set by hand). Its **Reload UI** button finishes the import: the game only allows a reload from a click. Nothing goes to chat.
+- A layout or game settings set with the same name as one you already have is **replaced**, so importing the same string again makes no copies. Your current bars are backed up first (`Backup: <name>`).
 - Each part keeps the backup its own tab makes, so the **Undo** on that tab puts it back.
 - EllesmereUI's own profile is not part of it: use EllesmereUI's own export / import for that.
 
@@ -131,7 +132,7 @@ EllesmereUI's full export already carries everything a module keeps in the Elles
 
 **Copy everything to another account at once**
 1. On the old account: *All in One* tab → tick what you want → **Export** (with Leatrix Plus ticked: **Reload & Export**) and copy the string.
-2. On the new account: **Paste String...** → **Import & Reload**.
+2. On the new account: **Paste String...** → **Import**, then **Reload UI** in the result window.
 
 Every import shows what it will change first, and every tab has an **Undo Last Import / Undo Last Load**.
 

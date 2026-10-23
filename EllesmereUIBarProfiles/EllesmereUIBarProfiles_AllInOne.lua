@@ -3,7 +3,9 @@ if EUI_CLIENT_BLOCKED then return end -- pre-12.1 client failsafe (EllesmereUI_C
 --  EllesmereUIBarProfiles_AllInOne.lua
 --  Dworak > Profiles, "All in One" tab (the last one): the other tabs in ONE
 --  string. Tick what goes into the export; an import puts every part where it
---  belongs, then reloads the UI once at the very end. Anything that didn't
+--  belongs, then a window lists what was imported and anything that didn't
+--  work, with a Reload UI button (the game allows a reload only from a click).
+--  Anything that didn't
 --  work is listed in a window of its own (not in chat).
 --
 --  Parts and what an import does with them:
@@ -175,10 +177,21 @@ local function BuildWindow()
 
     win.button = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
     win.button:SetSize(160, 26)
-    win.button:SetPoint("BOTTOM", 0, 16)
+
+    -- Close: next to Reload UI after an import (the import stays in place;
+    -- it finishes with your next reload / logout).
+    win.closeButton = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
+    win.closeButton:SetSize(160, 26)
+    win.closeButton:SetText("Close")
+    win.closeButton:SetScript("OnClick", function() win:Hide() end)
 
     win.close = CreateFrame("Button", nil, win, "UIPanelCloseButton")
     win.close:SetPoint("TOPRIGHT", -2, -2)
+
+    -- Escape closes it too.
+    if type(UISpecialFrames) == "table" then
+        table.insert(UISpecialFrames, "EllesmereUIProfilesAllInOneResult")
+    end
 end
 
 -- lines: { "text", ... }. reload: the button reloads the UI (after an
@@ -190,15 +203,20 @@ function AIO.ShowResult(title, sub, lines, reload)
     win.text:SetText(table.concat(lines, "\n"))
     win.child:SetHeight(math.max(10, (win.text:GetStringHeight() or 0) + 8))
     win.scroll:SetVerticalScroll(0)
+    win.button:ClearAllPoints()
     if reload then
         win.button:SetText("Reload UI")
         win.button:SetScript("OnClick", Reload)
-        win.close:Hide()
+        win.button:SetPoint("BOTTOMRIGHT", win, "BOTTOM", -6, 16)
+        win.closeButton:SetPoint("BOTTOMLEFT", win, "BOTTOM", 6, 16)
+        win.closeButton:Show()
     else
         win.button:SetText("Close")
         win.button:SetScript("OnClick", function() win:Hide() end)
-        win.close:Show()
+        win.button:SetPoint("BOTTOM", 0, 16)
+        win.closeButton:Hide()
     end
+    win.close:Show()
     win:Show()
     win:Raise()
 end
@@ -424,8 +442,8 @@ local function Describe(key, v)
     return ""
 end
 
--- Puts every part in place, then reloads (nothing went wrong) or shows what
--- did go wrong with a Reload UI button.
+-- Puts every part in place, then shows the result window (what was imported,
+-- what went wrong) with a Reload UI button.
 function AIO.Apply(P)
     local problems, done = {}, {}
     local function Fail(key, text) problems[#problems + 1] = "|cffff4040" .. LABEL[key] .. ":|r " .. text end
@@ -442,9 +460,13 @@ function AIO.Apply(P)
             if not okAvail then
                 Fail(key, "skipped, " .. tostring(why) .. ".")
             elseif key == "bars" then
+                -- A layout with the same name is replaced (importing the same
+                -- string again makes no "(2)" copies). Backups are never hit:
+                -- the export leaves them out.
                 local layouts = BP.DB().layouts
                 for _, L in ipairs(v.list) do
-                    local name = BP.FreeName(L.name or "Imported")
+                    local name = L.name or "Imported"
+                    if name:sub(1, #BP.BACKUP_PREFIX) == BP.BACKUP_PREFIX then name = BP.FreeName(name .. " (imported)") end
                     L.name = name
                     layouts[name] = L
                 end
@@ -505,32 +527,32 @@ function AIO.Apply(P)
         end
     end
 
+    -- Always the window: the game only allows a reload from a click (a reload
+    -- called from the Game Settings re-check timer is ADDON_ACTION_BLOCKED),
+    -- so its Reload UI button does it.
     local function Finish()
-        if #problems == 0 then
-            Reload()
-            -- Still here a second later (the game refused a reload outside a
-            -- click): the window's button does it.
-            C_Timer.After(1, function()
-                AIO.ShowResult("All in One Import", "Everything is in place; reload to finish.",
-                    { "|cff40ff40Imported:|r " .. table.concat(done, ", ") }, true)
-            end)
-            return
-        end
         local lines = {}
         if #done > 0 then
-            lines[#lines + 1] = "|cff40ff40Imported:|r " .. table.concat(done, ", ")
-            lines[#lines + 1] = " "
+            lines[#lines + 1] = "|cff40ff40Imported:|r"
+            for _, d in ipairs(done) do lines[#lines + 1] = "  " .. d end
         end
-        for _, l in ipairs(problems) do lines[#lines + 1] = l end
-        AIO.ShowResult("All in One Import", "Not everything worked. The rest is in place; reload to finish.",
-            lines, true)
+        if #problems > 0 then
+            if #lines > 0 then lines[#lines + 1] = " " end
+            for _, l in ipairs(problems) do lines[#lines + 1] = l end
+        end
+        if #lines == 0 then lines[1] = "Nothing needed changing." end
+        AIO.ShowResult("All in One Import", #problems == 0
+            and "Everything is in place. Reload the UI to finish."
+            or "Not everything worked. The rest is in place; reload the UI to finish.", lines, true)
     end
 
     -- Game Settings last: they are checked again a second after being set.
     local S = parts.gs
     if not S then return Finish() end
     local GS = BP.GS
-    local name = GS.FreeName(S.name or "Imported")
+    -- Same name: replaced (no "(2)" copies), backups never hit.
+    local name = S.name or "Imported"
+    if name:sub(1, #BP.BACKUP_PREFIX) == BP.BACKUP_PREFIX then name = GS.FreeName(name .. " (imported)") end
     S.name = name
     S.backup = nil
     GS.Store()[name] = S
@@ -593,10 +615,10 @@ local function AskImport()
         C_Timer.After(0, function()
             EllesmereUI:ShowConfirmPopup({
                 title = "Import All in One",
-                message = string.format("From %s%s:\n%s\nThe UI reloads at the end.", Who(P.char),
+                message = string.format("From %s%s:\n%s\nThen a window shows the result; its Reload UI button finishes the import.", Who(P.char),
                     P.time and (" (" .. date("%Y-%m-%d", P.time) .. ")") or "", table.concat(lines, "\n")),
                 disclaimer = table.concat(warn, "\n"),
-                confirmText = "Import & Reload",
+                confirmText = "Import",
                 onConfirm = function()
                     -- Damaged / unavailable parts go into the result window too.
                     local ok, e = pcall(AIO.Apply, P)
@@ -611,6 +633,15 @@ local function AskImport()
 end
 
 AIO.AskExport, AIO.AskImport = AskExport, AskImport
+
+-- The UI Accent Color repaints the highlighted intro row live.
+if EllesmereUI.RegAccent then
+    EllesmereUI.RegAccent({ type = "callback", fn = function()
+        local ar, ag, ab = BP.Accent()
+        if AIO.introWash then AIO.introWash:SetColorTexture(ar, ag, ab, 0.08) end
+        if AIO.introBorder and AIO.introBorder.SetColor then AIO.introBorder:SetColor(ar, ag, ab, 0.7) end
+    end })
+end
 
 -------------------------------------------------------------------------------
 --  Page
@@ -659,14 +690,30 @@ function AIO.BuildPage(parent, yOffset)
 
     _, h = W:SectionHeader(parent, "ALL IN ONE", y);  y = y - h
 
-    _, h = W:DualRow(parent, y,
+    local introRow
+    introRow, h = W:DualRow(parent, y,
         { type = "label", text = "Everything on the other Profiles tabs in one string. Tick what goes into the export." }
     );  y = y - h
+    -- Highlight like the Talent Calculator's Legacy row: accent frame and a
+    -- faint accent wash (repainted when the UI Accent Color changes).
+    local prebuild = EllesmereUI.IsSearchPrebuild and EllesmereUI.IsSearchPrebuild()
+    if not prebuild and introRow and introRow.CreateTexture then
+        local ar, ag, ab = BP.Accent()
+        AIO.introWash = introRow:CreateTexture(nil, "BACKGROUND", nil, 2)
+        AIO.introWash:SetAllPoints()
+        AIO.introWash:SetColorTexture(ar, ag, ab, 0.08)
+        AIO.introBorder = EllesmereUI.MakeBorder and EllesmereUI.MakeBorder(introRow, ar, ag, ab, 0.7, EllesmereUI.PanelPP)
+    end
 
-    _, h = W:DualRow(parent, y,
-        { type = "label", text = "|cff999999An import puts every part where it belongs, then reloads the UI once. "
-              .. "Anything that didn't work is listed in a window first. Each tab's Undo puts its part back.|r" }
-    );  y = y - h
+    -- One sentence per row: as one row the text ran past the page edge.
+    for _, line in ipairs({
+        "An import puts every part where it belongs.",
+        "Then a window lists what was imported and anything that didn't work.",
+        "Its Reload UI button finishes the import.",
+        "Each tab's Undo puts its part back.",
+    }) do
+        _, h = W:DualRow(parent, y, { type = "label", text = "|cff999999" .. line .. "|r" });  y = y - h
+    end
 
     local function PartToggle(p)
         if not p then return BLANK() end
@@ -706,7 +753,7 @@ function AIO.BuildPage(parent, yOffset)
               .. "changes are in the string.",
           onClick = AskExport },
         { type = "labeledButton", text = "Import All in One", buttonText = "Paste String...",
-          tooltip = "Puts every part of an All in One string where it belongs, then reloads the UI. Shows what is "
+          tooltip = "Puts every part of an All in One string where it belongs, then shows the result with a Reload UI button. Shows what is "
               .. "in the string first.",
           onClick = AskImport }
     );  y = y - h

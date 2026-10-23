@@ -98,6 +98,8 @@ local function Accent()
     return 0.05, 0.82, 0.62
 end
 
+BP.Accent = Accent
+
 function BP.AccentHex()
     local r, g, b = Accent()
     return string.format("|cff%02x%02x%02x", r * 255, g * 255, b * 255)
