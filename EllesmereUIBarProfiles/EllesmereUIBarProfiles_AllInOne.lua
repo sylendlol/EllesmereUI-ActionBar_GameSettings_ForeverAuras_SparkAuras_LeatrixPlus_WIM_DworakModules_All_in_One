@@ -594,7 +594,7 @@ local function AskImport()
             if v then
                 local okAvail, why = Available(p.key)
                 if okAvail then
-                    lines[#lines + 1] = p.label .. ": " .. Describe(p.key, v)
+                    lines[#lines + 1] = "|cffffffff" .. p.label .. ":|r " .. Describe(p.key, v)
                 else
                     skip[#skip + 1] = p.label .. " (" .. tostring(why) .. ")"
                 end
@@ -628,6 +628,23 @@ local function AskImport()
                     end
                 end,
             })
+            -- EUI draws the message white at TEXT_DIM alpha (0.53), so a white
+            -- colour code changes nothing. Here: the same grey, opaque, so the
+            -- white part names stand out; put back when the popup closes.
+            local pop = _G.EUIConfirmPopup
+            local msg = pop and pop._msg
+            if msg and msg.SetTextColor then
+                local d = EllesmereUI.TEXT_DIM or { r = 1, g = 1, b = 1, a = 0.53 }
+                local a = d.a or 0.53
+                msg:SetTextColor(d.r * a, d.g * a, d.b * a, 1)
+                if not pop._bpAioHooked then
+                    pop._bpAioHooked = true
+                    pop:HookScript("OnHide", function()
+                        local t = EllesmereUI.TEXT_DIM or { r = 1, g = 1, b = 1, a = 0.53 }
+                        msg:SetTextColor(t.r, t.g, t.b, t.a)
+                    end)
+                end
+            end
         end)
     end, "Import All in One", "Paste a Profiles > All in One string below")
 end
