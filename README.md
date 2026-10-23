@@ -1,8 +1,11 @@
 # EllesmereUI Profiles
 
-<img width="1372" height="997" alt="image" src="https://github.com/user-attachments/assets/73f9f020-09ca-461b-81bb-abe9496191cb" />
+<img width="1362" height="993" alt="image" src="https://github.com/user-attachments/assets/b1569303-df1c-4574-9e5e-9e84593ae480" />
 <img width="1375" height="997" alt="image" src="https://github.com/user-attachments/assets/a0fff417-e381-4dd1-8728-1f3dd155833c" />
 <img width="1379" height="991" alt="image" src="https://github.com/user-attachments/assets/94adfc7f-4b5e-44eb-bfba-61624ce1c0aa" />
+<img width="1369" height="996" alt="image" src="https://github.com/user-attachments/assets/7b9b0a87-b11d-4276-bf35-c803a89cbe3e" />
+<img width="1373" height="993" alt="image" src="https://github.com/user-attachments/assets/ea316987-e10e-4b76-b18d-99547716a457" />
+<img width="1391" height="1002" alt="image" src="https://github.com/user-attachments/assets/2baffcda-8064-438e-a0c9-4724f5857148" />
 
 
 Save your setup once and load it on any other character or account: action bars, macros, key bindings, the game's own settings and all your ForeverAuras auras.
