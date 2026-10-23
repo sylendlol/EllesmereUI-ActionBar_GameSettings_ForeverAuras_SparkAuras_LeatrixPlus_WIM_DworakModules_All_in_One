@@ -73,13 +73,18 @@ end
 -------------------------------------------------------------------------------
 --  Export / decode / apply
 -------------------------------------------------------------------------------
-function LP.ExportString()
+-- The export data (also used by All in One): payload, count.
+function LP.Payload()
     local settings, n = LP.Settings()
     if not settings then return nil, "Leatrix Plus isn't loaded" end
     if n == 0 then return nil, "Leatrix Plus has no saved settings yet (reload once first)" end
-    local str = BP.Pack(LP.EXPORT_PREFIX, {
-        v = 1, char = BP.CharKey(), time = time(), version = Version(), count = n, db = settings,
-    })
+    return { v = 1, char = BP.CharKey(), time = time(), version = Version(), count = n, db = settings }, n
+end
+
+function LP.ExportString()
+    local payload, n = LP.Payload()
+    if not payload then return nil, n end
+    local str = BP.Pack(LP.EXPORT_PREFIX, payload)
     if not str then return nil, "LibDeflate is missing" end
     return str, n
 end
@@ -90,7 +95,11 @@ function LP.DecodeString(str)
         if err == "wrong kind of string" then err = "this is not a Profiles > Leatrix Plus string" end
         return nil, err
     end
-    if type(raw.db) ~= "table" then return nil, "the string is damaged (data)" end
+    return LP.FromRaw(raw)
+end
+
+function LP.FromRaw(raw)
+    if type(raw) ~= "table" or type(raw.db) ~= "table" then return nil, "the string is damaged (data)" end
     local db, n = {}, 0
     for k, v in pairs(raw.db) do
         local tv = type(v)
@@ -216,7 +225,7 @@ local function AskUndo()
     })
 end
 
-LP.AskExport, LP.AskImport, LP.AskUndo = AskExport, AskImport, AskUndo
+LP.AskExport, LP.AskImport, LP.AskUndo, LP.Backup, LP.Version = AskExport, AskImport, AskUndo, Backup, Version
 
 -- Reload & Export: the string right after the reload.
 local loginFrame = CreateFrame("Frame")

@@ -57,6 +57,15 @@ local function Version()
     end
 end
 
+-- The addon's version from its .toc ("0.92.71-BETA"), or nil.
+local function TocVersion()
+    local get = (C_AddOns and C_AddOns.GetAddOnMetadata) or _G.GetAddOnMetadata
+    if not get then return nil end
+    local ok, v = pcall(get, cfg.addon, "Version")
+    return ok and type(v) == "string" and v ~= "" and v or nil
+end
+FA.TocVersion = TocVersion
+
 -- The addon's saved aura table, or nil when the addon isn't loaded.
 function FA.Displays()
     local loaded = C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded(cfg.addon)
@@ -108,15 +117,21 @@ end
 -------------------------------------------------------------------------------
 --  Export / decode
 -------------------------------------------------------------------------------
-function FA.ExportString()
+-- The export data (also used by All in One): payload, count, top-level count.
+function FA.Payload()
     local displays = FA.Displays()
     if not displays then return nil, LABEL .. " isn't loaded" end
     local n, tops = FA.Count()
     if n == 0 then return nil, "you have no " .. LABEL .. " auras" end
-    local payload = {
+    return {
         v = 1, addon = cfg.addon, char = BP.CharKey(), time = time(), count = n, tops = tops,
         version = Version(), displays = displays,
-    }
+    }, n, tops
+end
+
+function FA.ExportString()
+    local payload, n, tops = FA.Payload()
+    if not payload then return nil, n end
     local str = BP.Pack(FA.EXPORT_PREFIX, payload)
     if not str then return nil, "LibDeflate is missing" end
     return str, n, tops
@@ -143,7 +158,12 @@ function FA.DecodeString(str)
         end
         return nil, err
     end
-    if type(raw.displays) ~= "table" then return nil, "the string is damaged (data)" end
+    return FA.FromRaw(raw, from)
+end
+
+-- A decoded payload, cleaned (from = the other addon's label, or nil).
+function FA.FromRaw(raw, from)
+    if type(raw) ~= "table" or type(raw.displays) ~= "table" then return nil, "the string is damaged (data)" end
     -- Only string ids with table data; each aura's id matches its key.
     local displays, count = {}, 0
     for id, data in pairs(raw.displays) do
@@ -324,7 +344,8 @@ function FA.BuildPage(parent, yOffset)
 
     -- Two full-width rows (no right half), so the long lines don't overlap.
     _, h = W:DualRow(parent, y,
-        { type = "label", text = n and string.format("This account: %d top-level auras / groups, %d auras in all (group contents too)", tops, n)
+        { type = "label", text = n and (string.format("This account: %d top-level auras / groups, %d auras in all (group contents too)", tops, n)
+              .. (TocVersion() and (" (" .. LABEL .. " " .. TocVersion() .. ")") or ""))
               or ("|cffff4040" .. LABEL .. " isn't loaded.|r") }
     );  y = y - h
 

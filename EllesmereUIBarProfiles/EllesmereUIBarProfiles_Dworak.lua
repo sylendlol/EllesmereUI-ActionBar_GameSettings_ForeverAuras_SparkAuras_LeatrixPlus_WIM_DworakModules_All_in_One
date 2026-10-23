@@ -6,7 +6,8 @@ if EUI_CLIENT_BLOCKED then return end -- pre-12.1 client failsafe (EllesmereUI_C
 --  tick, in one string, and that string put on another account in one go.
 --
 --  The modules are found at run time: every installed addon that depends on
---  EllesmereUIDworak (required or optional), Profiles itself left out. Its
+--  EllesmereUIDworak (required or optional), Profiles itself left out, plus
+--  the EXTRA add-ons (Durability Tip, Gold Names: own SV only). Its
 --  settings can live in two places, both are taken:
 --    lite: EllesmereUIDB.profiles[<active EUI profile>].addons[<folder>]
 --          (EllesmereUI.Lite.NewDB: per EllesmereUI profile)
@@ -85,14 +86,23 @@ local function DependsOnHost(i)
     return false
 end
 
--- Every installed Dworak module: { name, title, loaded }, sorted by title.
+-- Add-ons from this project that are not in the Dworak section but keep their
+-- settings in their own <folder>DB, which EllesmereUI's full export doesn't
+-- carry. Listed with the modules so they can travel too.
+local EXTRA = {
+    EllesmereUI_DurabilityTip = true,   -- EllesmereUI_DurabilityTipDB
+    EllesmereUI_GoldNames     = true,   -- EllesmereUI_GoldNamesDB
+}
+DM.EXTRA = EXTRA
+
+-- Every installed Dworak module (+ EXTRA): { name, title, loaded }, sorted by title.
 function DM.Modules()
     local list = {}
     local num = Call(AddOns.GetNumAddOns) or Call(_G.GetNumAddOns) or 0
     for i = 1, num do
         local name, title = Call(AddOns.GetAddOnInfo, i)
         if not name then name, title = Call(_G.GetAddOnInfo, i) end
-        if name and name ~= SELF and name ~= HOST and DependsOnHost(i) then
+        if name and name ~= SELF and name ~= HOST and (EXTRA[name] or DependsOnHost(i)) then
             list[#list + 1] = { name = name, title = CleanTitle(title, name), loaded = IsLoaded(name) }
         end
     end
@@ -168,7 +178,8 @@ end
 -------------------------------------------------------------------------------
 --  Export / decode / apply
 -------------------------------------------------------------------------------
-function DM.ExportString()
+-- The export data (also used by All in One): payload, titles, setting count.
+function DM.Payload()
     local mods, titles, total = {}, {}, 0
     for _, m in ipairs(DM.Modules()) do
         if DM.Selected(m.name) then
@@ -182,7 +193,13 @@ function DM.ExportString()
         end
     end
     if #titles == 0 then return nil, "none of the ticked modules has settings to export" end
-    local str = BP.Pack(DM.EXPORT_PREFIX, { v = 1, char = BP.CharKey(), time = time(), mods = mods })
+    return { v = 1, char = BP.CharKey(), time = time(), mods = mods }, titles, total
+end
+
+function DM.ExportString()
+    local payload, titles, total = DM.Payload()
+    if not payload then return nil, titles end
+    local str = BP.Pack(DM.EXPORT_PREFIX, payload)
     if not str then return nil, "LibDeflate is missing" end
     return str, titles, total
 end
@@ -193,7 +210,11 @@ function DM.DecodeString(str)
         if err == "wrong kind of string" then err = "this is not a Profiles > Dworak Modules string" end
         return nil, err
     end
-    if type(raw.mods) ~= "table" then return nil, "the string is damaged (data)" end
+    return DM.FromRaw(raw)
+end
+
+function DM.FromRaw(raw)
+    if type(raw) ~= "table" or type(raw.mods) ~= "table" then return nil, "the string is damaged (data)" end
     local mods, count = {}, 0
     for name, m in pairs(raw.mods) do
         if type(name) == "string" and name:find("^[%w_%-]+$") and type(m) == "table"

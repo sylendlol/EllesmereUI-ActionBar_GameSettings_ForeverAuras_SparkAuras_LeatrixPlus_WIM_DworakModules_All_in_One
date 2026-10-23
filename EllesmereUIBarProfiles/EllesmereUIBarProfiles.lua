@@ -1079,6 +1079,8 @@ local function Clean(raw)
     return L
 end
 
+BP.CleanLayout = Clean
+
 function BP.DecodeString(str)
     if type(str) ~= "string" then return nil, "empty string" end
     str = str:gsub("%s+", "")

@@ -355,7 +355,10 @@ function GS.Apply(S, onDone)
     return true
 end
 
-function GS.Load(name)
+GS.HAND_HINT = HAND_HINT
+
+-- onDone(rep): given by All in One, which reports itself (no chat, no popup).
+function GS.Load(name, onDone)
     local S = GS.Store()[name]
     if not S then return end
     if InCombatLockdown() then
@@ -378,6 +381,7 @@ function GS.Load(name)
     end
     GS.Apply(S, function(rep)
         GS.lastReport = rep
+        if onDone then return onDone(rep) end
         BP.Say(string.format("game settings %s%s|r loaded: %d changed%s.", BP.AccentHex(), tostring(name),
             rep.changed, rep.failed > 0 and (", |cffff4040" .. rep.failed .. " refused by the game|r") or ""))
         for i, d in ipairs(rep.failedList) do
@@ -451,7 +455,12 @@ function GS.DecodeString(str)
         if err == "wrong kind of string" then err = "this is not a Profiles > Game Settings string" end
         return nil, err
     end
-    if type(raw.vars) ~= "table" then return nil, "the string is damaged (data)" end
+    return GS.FromRaw(raw)
+end
+
+-- A decoded set, cleaned field by field (it came from someone else).
+function GS.FromRaw(raw)
+    if type(raw) ~= "table" or type(raw.vars) ~= "table" then return nil, "the string is damaged (data)" end
     local function S_(v, max) return type(v) == "string" and v:sub(1, max or 255) or nil end
     local S = { v = 1, name = S_(raw.name, 60), char = S_(raw.char, 80), class = S_(raw.class, 20),
                 level = type(raw.level) == "number" and raw.level or nil,
