@@ -199,7 +199,7 @@ Layouts, setting sets, tick boxes and backups are saved for the whole WoW accoun
 
 ## Known limitations
 
-- **Early version.** The Game Settings tab is tested in game. The Action Bars tab, the aura imports and the Leatrix Plus, WIM and Dworak Modules tabs are not fully tested yet. Please report anything odd together with the `/abp report` output.
+- **Early version.** The Game Settings tab is tested in game. The Action Bars tab, the aura imports and the Leatrix Plus, WIM and Dworak Modules tabs are tested. Please report anything odd together with the `/abp report` output.
 - The game doesn't let an addon put a spell the character hasn't learned on a button: such buttons stay free until Fill In When Learned can fill them.
 - **Sticky Targeting** can't be set by an addon (the game ignores it). After a load the report tells you to tick or untick it by hand in *Esc > Options > Controls*.
 - The pet bar is not saved (pet actions belong to the pet).
