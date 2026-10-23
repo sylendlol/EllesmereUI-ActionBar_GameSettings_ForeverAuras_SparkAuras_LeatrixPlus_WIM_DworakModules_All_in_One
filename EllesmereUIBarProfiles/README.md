@@ -1,17 +1,20 @@
 # EllesmereUI Profiles
 
-Save your setup once and load it on any other character or account: action bars, macros, key bindings, the game's own settings and all your ForeverAuras auras.
+Save your setup once and load it on any other character or account: action bars, macros, key bindings, the game's own settings all your ForeverAuras and Spark Forever auras, your Leatrix Plus settings, and the settings of the other Dworak modules.
 Built as a module for the **Dworak** section of [EllesmereUI](https://www.curseforge.com/wow/addons/ellesmereui).
 
 Made for **WoW Forever** (Interface 16001) with **EllesmereUI 9.6.1**. The `.toc` also lists the 12.0.x / 12.1 interface numbers.
 
-The module has three tabs at the top of its page:
+The module has six tabs at the top of its page:
 
 | Tab | What it moves |
 | --- | --- |
 | **Action Bars** | What is on your action bars, your macros and your key bindings |
 | **Game Settings** | The game's own options (Esc > Options): My Name, Auto Loot, nameplates, camera, soft targeting, chat, ... |
 | **ForeverAuras** | Every ForeverAuras aura and group of the account, in one go |
+| **Spark Forever** | Every Spark Forever aura and group of the account, in one go |
+| **Leatrix Plus** | Every Leatrix Plus setting of the account, in one go |
+| **Dworak Modules** | The settings of the Dworak modules you tick (Ammo Counter, Bag Cleaner, Loot Tracker, ...) |
 
 ## Why
 
@@ -42,18 +45,32 @@ Profiles saves every spell with its **name and rank** as well, and places it str
 - After loading, a reload is offered: some settings only fully apply after one.
 - Settings the game refuses are listed. Settings no addon may change are never tried; the report tells you where to set them by hand.
 
-### ForeverAuras
-- ForeverAuras keeps its auras per WoW account, so every character of an account already shares them. Its own import takes one aura string at a time. This tab moves **all of them at once**.
+### ForeverAuras and Spark Forever
+Both are WeakAuras-style addons, and each has its own tab that works the same way.
+- They keep their auras per WoW account, so every character of an account already shares them. Their own import takes one aura string at a time. These tabs move **all of them at once**.
 - **Export All Auras:** every aura and group in one string.
-- **Import Auras:** paste the string on the other account. A confirm popup lists the top-level auras and groups (the ones already there in yellow). The auras are then written into ForeverAuras' saved data and the UI reloads. ForeverAuras' own login does the rest, as for any saved aura: group links are re-checked, duplicate ids fixed, and every aura is updated to the running ForeverAuras version.
+- **Import Auras:** paste the string on the other account. A confirm popup lists the top-level auras and groups (the ones already there in yellow). The auras are then written into the addon's saved data and the UI reloads. The addon's own login does the rest, as for any saved aura: group links are re-checked, duplicate ids fixed, and every aura is updated to the running version.
 - **If An Aura Already Exists:** *Keep Mine* (default), *Replace It*, or *Add as Copy* ("Name (2)", group links rewritten).
+- A ForeverAuras string can be imported on the Spark Forever tab and the other way round, to move auras from one addon to the other. The confirm popup says so; auras that use something only the other addon has may need fixing.
 - Auras can run their own code: only import strings you made yourself or trust.
+
+### Leatrix Plus
+- Leatrix Plus keeps its settings per WoW account and writes them to disk only when the UI reloads or you log out.
+- **Export All Settings:** every setting in one string (chat history left out). *Reload & Export* reloads first so this session's changes are included, and shows the string right after the reload; *Export As Saved* uses what was saved at the last reload.
+- **Import Settings:** paste the string on the other account. All Leatrix Plus settings there are replaced and the UI reloads. It uses Leatrix Plus' own `/ltp nosave`, so Leatrix doesn't write its old settings back over the imported ones.
+- **Undo Last Import** puts back the settings you had before.
+
+### Dworak Modules
+- Lists every installed Dworak module (every addon that depends on EllesmereUIDworak) with a tick box. **Tick All** / **Untick All**.
+- **Export Ticked Modules:** the ticked modules' settings in one string. Settings that EllesmereUI keeps per profile come from the active EllesmereUI profile; settings a module keeps in its own saved data (for example Loot Tracker) come along too. Per-character data is left out.
+- **Import Settings:** replaces the settings of every module in the string that is enabled here, then reloads the UI. Modules that aren't installed or enabled are listed and skipped. Settings kept per EllesmereUI profile go into the active profile.
+- **Undo Last Import** puts back the settings the modules had before.
 
 ## Requirements
 
 - [EllesmereUI](https://www.curseforge.com/wow/addons/ellesmereui)
 - **EllesmereUIDworak**, the host addon that owns the *Dworak* section of the EllesmereUI panel
-- Optional: **EllesmereUIActionBars** (the ten EllesmereUI bars), **ForeverAuras** (for the ForeverAuras tab)
+- Optional: **EllesmereUIActionBars** (the ten EllesmereUI bars), **ForeverAuras**, **Spark Forever** and **Leatrix Plus** (for their tabs)
 
 ## Installation
 
@@ -71,8 +88,12 @@ Profiles saves every spell with its **name and rank** as well, and places it str
 1. On the old account: *Game Settings* tab → **Save As...**, then **Export** and copy the string.
 2. On the new account: **Paste String...** → pick the imported set → **Load**.
 
-**Copy all ForeverAuras auras to another account**
-1. On the old account: *ForeverAuras* tab → **Export** and copy the string.
+**Copy all ForeverAuras or Spark Forever auras to another account**
+1. On the old account: *ForeverAuras* or *Spark Forever* tab → **Export** and copy the string.
+2. On the new account: **Paste String...** → **Import & Reload**.
+
+**Copy Leatrix Plus settings to another account**
+1. On the old account: *Leatrix Plus* tab → **Export** → **Reload & Export**, then copy the string that appears after the reload.
 2. On the new account: **Paste String...** → **Import & Reload**.
 
 ## Commands
@@ -82,6 +103,9 @@ Profiles saves every spell with its **name and rank** as well, and places it str
 | `/abp` or `/barprofiles` | Opens the Profiles page (Action Bars tab) |
 | `/abp gs` | Opens the Game Settings tab |
 | `/abp fa` | Opens the ForeverAuras tab |
+| `/abp sf` | Opens the Spark Forever tab |
+| `/abp lp` | Opens the Leatrix Plus tab |
+| `/abp dm` | Opens the Dworak Modules tab |
 | `/abp save <name>` | Saves the current action bar layout |
 | `/abp load <name>` | Loads a layout (with the confirm popup) |
 | `/abp export <name>` | Shows a layout's export string |
@@ -115,7 +139,7 @@ Profiles saves every spell with its **name and rank** as well, and places it str
 | Reset Other Settings | off | Settings the set leaves at default go back to default |
 | Backup Before Load | on | Saves the current value of everything the load changes |
 
-### ForeverAuras
+### ForeverAuras / Spark Forever
 
 | Option | Default | What it does |
 | --- | --- | --- |
@@ -128,20 +152,20 @@ Layouts, setting sets and options are saved for the whole WoW account in `Ellesm
 - **Spells** are placed from the spellbook with `C_SpellBook.PickupSpellBookItem` (by spell ID, else by name and rank), with `PickupSpell` only as a last resort.
 - **Macros on buttons:** `GetActionInfo` returns a macro's spell rather than its index, so a macro button is picked up and put straight back to read the index from the cursor.
 - **New spells:** the game pushes every newly learned spell onto an empty Action Bar 1 slot (`SPELL_PUSHED_TO_ACTIONBAR`). Fill In When Learned moves it to its layout button and clears the pushed copy.
-- **Strings:** a small serializer of its own (no `loadstring`: imported strings are only ever read as data) and LibDeflate, which ships with EllesmereUI. Prefixes: `!EUIBP1!` (Action Bars), `!EUIGS1!` (Game Settings), `!EUIFA1!` (ForeverAuras).
+- **Strings:** a small serializer of its own (no `loadstring`: imported strings are only ever read as data) and LibDeflate, which ships with EllesmereUI. Prefixes: `!EUIBP1!` (Action Bars), `!EUIGS1!` (Game Settings), `!EUIFA1!` (ForeverAuras), `!EUISF1!` (Spark Forever), `!EUILP1!` (Leatrix Plus), `!EUIDM1!` (Dworak Modules).
 - **Game Settings:** the CVar list comes from `C_Console.GetAllCommands`. `C_CVar.GetCVarInfo` tells account, character and PC settings apart, and which ones are locked, secure or read-only (those are never touched). Each setting is read back after it is set and retried once a second later.
 - Loading and saving only run out of combat.
 - No EllesmereUI file is modified. The module registers through `EllesmereUIDworak.AddModule`.
 
 ## Known limitations
 
-- **Early version.** The Game Settings tab is tested in game. The Action Bars tab and the ForeverAuras import are not fully tested yet. Please report anything odd together with the `/abp report` output.
+- **Early version.** The Game Settings tab is tested in game. The Action Bars tab and the ForeverAuras / Spark Forever import are not fully tested yet. Please report anything odd together with the `/abp report` output.
 - The game doesn't let an addon put a spell the character hasn't learned on a button: such buttons stay free until Fill In When Learned can fill them.
 - **Sticky Targeting** can't be set by an addon (the game ignores it). After a load the report tells you to tick or untick it by hand in *Esc > Options > Controls*.
 - The pet bar is not saved (pet actions belong to the pet).
 - Key bindings made with the old "bind a spell / macro / item to a key" method (not a command) are not saved.
 - Items you don't carry may not be placeable; they are listed in the report.
-- ForeverAuras: a string made with a newer ForeverAuras than yours shows a warning; update ForeverAuras first.
+- ForeverAuras / Spark Forever: a string made with a newer version of the addon than yours shows a warning; update the addon first.
 
 ## Author
 

@@ -424,15 +424,26 @@ DW.AddModule({
     key         = MODULE_KEY,
     title       = "Profiles",
     order       = 5,
-    description = "Saved setups you can load on any character or account: action bars, macros and key bindings; the game's own settings; every ForeverAuras aura.",
-    pages       = { PAGE, "Game Settings", "ForeverAuras" },
-    -- Tabs: Action Bars (this file), Game Settings (_GameSettings.lua), ForeverAuras (_ForeverAuras.lua).
+    description = "Saved setups you can load on any character or account: action bars, macros and key bindings; the game's own settings; every ForeverAuras and Spark Forever aura; Leatrix Plus; the Dworak modules' settings.",
+    pages       = { PAGE, "Game Settings", "ForeverAuras", "Spark Forever", "Leatrix Plus", "Dworak Modules" },
+    -- Tabs: Action Bars (this file), Game Settings (_GameSettings.lua),
+    -- ForeverAuras + Spark Forever (_ForeverAuras.lua, one MakeAuraTab each),
+    -- Leatrix Plus (_Leatrix.lua), Dworak Modules (_Dworak.lua).
     buildPage   = function(pageName, parent, yOffset)
         if pageName == "Game Settings" and BP.GS then
             return BP.GS.BuildPage(parent, yOffset)
         end
         if pageName == "ForeverAuras" and BP.FA then
             return BP.FA.BuildPage(parent, yOffset)
+        end
+        if pageName == "Spark Forever" and BP.SF then
+            return BP.SF.BuildPage(parent, yOffset)
+        end
+        if pageName == "Leatrix Plus" and BP.LP then
+            return BP.LP.BuildPage(parent, yOffset)
+        end
+        if pageName == "Dworak Modules" and BP.DM then
+            return BP.DM.BuildPage(parent, yOffset)
         end
         return BuildPage(pageName, parent, yOffset)
     end,
@@ -469,6 +480,12 @@ SlashCmdList.EUIBARPROFILES = function(msg)
         DW.Open(MODULE_KEY, "Game Settings")
     elseif cmd == "fa" or cmd == "auras" then
         DW.Open(MODULE_KEY, "ForeverAuras")
+    elseif cmd == "sf" or cmd == "spark" then
+        DW.Open(MODULE_KEY, "Spark Forever")
+    elseif cmd == "lp" or cmd == "leatrix" then
+        DW.Open(MODULE_KEY, "Leatrix Plus")
+    elseif cmd == "dm" or cmd == "dworak" or cmd == "modules" then
+        DW.Open(MODULE_KEY, "Dworak Modules")
     elseif cmd == "report" then
         BP.PrintReport()
     elseif cmd == "pending" then

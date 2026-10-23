@@ -1,51 +1,67 @@
 if EUI_CLIENT_BLOCKED then return end -- pre-12.1 client failsafe (EllesmereUI_ClientGate.lua)
 -------------------------------------------------------------------------------
 --  EllesmereUIBarProfiles_ForeverAuras.lua
---  Dworak > Profiles, "ForeverAuras" tab: every ForeverAuras aura in ONE
---  string, and that string put back on another account in one go, instead of
---  importing the auras one by one.
+--  Dworak > Profiles, "ForeverAuras" and "Spark Forever" tabs: every aura of
+--  a WeakAuras-style addon in ONE string, and that string put back on another
+--  account in one go, instead of importing the auras one by one.
 --
---  ForeverAuras (a WeakAuras fork) keeps its auras in ForeverAurasSaved, a
---  SavedVariable of the WoW account: every character of one account already
---  shares them, another account needs the string.
+--  Both addons are WeakAuras forks with the same saved layout:
+--    ForeverAuras  -> ForeverAurasSaved.displays  (global ForeverAuras)
+--    Spark Forever -> SparkForeverSaved.displays  (global SparkForever)
+--  The SavedVariable belongs to the WoW account: every character of one
+--  account already shares the auras, another account needs the string.
+--  One tab per addon, built by MakeAuraTab(cfg) below.
 --
---  Export: ForeverAurasSaved.displays (every aura, groups with their
---  children) serialized + LibDeflate'd ("!EUIFA1!").
---  Import: the auras are written straight into ForeverAurasSaved.displays and
---  the UI reloads. ForeverAuras' own login does the rest, exactly as for the
---  auras already saved: parent / child links are re-checked
+--  Export: <Saved>.displays (every aura, groups with their children)
+--  serialized + LibDeflate'd ("!EUIFA1!" ForeverAuras, "!EUISF1!" Spark).
+--  Import: the auras are written straight into <Saved>.displays and the UI
+--  reloads. The addon's own login does the rest, exactly as for the auras
+--  already saved: parent / child links are re-checked
 --  (SyncParentChildRelationships), duplicate uids fixed
 --  (ValidateUniqueDataIds) and each aura is migrated to the running version.
 --  An aura (or group) whose name already exists here is kept, replaced or
---  added as a copy (If An Aura Already Exists).
+--  added as a copy (If An Aura Already Exists). A string of the other addon
+--  is accepted too (moving auras from ForeverAuras to Spark Forever), with a
+--  note in the confirm popup.
 -------------------------------------------------------------------------------
 local _, ns = ...
 local BP = ns.BP
 if not BP then return end
 
-local FA = {}
-BP.FA = FA
+-- Every aura tab's export prefix -> its label, so one tab can name a string
+-- made by the other.
+local PREFIX_LABEL = {}
 
-FA.PAGE          = "ForeverAuras"
-FA.EXPORT_PREFIX = "!EUIFA1!"
+local function MakeAuraTab(cfg)
+local FA = { cfg = cfg }
+local LABEL = cfg.label
 
-local FA_DEFAULTS = {
-    faExisting = "keep",   -- "keep" | "replace" | "copy"
-}
+FA.PAGE          = cfg.page
+FA.EXPORT_PREFIX = cfg.prefix
+PREFIX_LABEL[cfg.prefix] = LABEL
 
 function FA.Get(key)
     local v = BP.DB().opt[key]
-    if v == nil then return FA_DEFAULTS[key] end
+    if v == nil and key == cfg.optKey then return "keep" end -- "keep" | "replace" | "copy"
     return v
 end
 
 function FA.Set(key, value) BP.DB().opt[key] = value end
 
--- ForeverAuras' saved aura table, or nil when the addon isn't loaded.
+-- The addon's running version (its InternalVersion), or nil.
+local function Version()
+    local g = _G[cfg.global]
+    if type(g) == "table" and type(g.InternalVersion) == "function" then
+        local ok, v = pcall(g.InternalVersion)
+        if ok and type(v) == "number" then return v end
+    end
+end
+
+-- The addon's saved aura table, or nil when the addon isn't loaded.
 function FA.Displays()
-    local loaded = C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ForeverAuras")
-    if loaded == nil and _G.IsAddOnLoaded then loaded = _G.IsAddOnLoaded("ForeverAuras") end
-    local saved = _G.ForeverAurasSaved
+    local loaded = C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded(cfg.addon)
+    if loaded == nil and _G.IsAddOnLoaded then loaded = _G.IsAddOnLoaded(cfg.addon) end
+    local saved = _G[cfg.sv]
     if not loaded or type(saved) ~= "table" or type(saved.displays) ~= "table" then return nil end
     return saved.displays
 end
@@ -94,13 +110,12 @@ end
 -------------------------------------------------------------------------------
 function FA.ExportString()
     local displays = FA.Displays()
-    if not displays then return nil, "ForeverAuras isn't loaded" end
+    if not displays then return nil, LABEL .. " isn't loaded" end
     local n, tops = FA.Count()
-    if n == 0 then return nil, "you have no ForeverAuras auras" end
+    if n == 0 then return nil, "you have no " .. LABEL .. " auras" end
     local payload = {
-        v = 1, char = BP.CharKey(), time = time(), count = n, tops = tops,
-        version = _G.ForeverAuras and _G.ForeverAuras.InternalVersion and _G.ForeverAuras.InternalVersion() or nil,
-        displays = displays,
+        v = 1, addon = cfg.addon, char = BP.CharKey(), time = time(), count = n, tops = tops,
+        version = Version(), displays = displays,
     }
     local str = BP.Pack(FA.EXPORT_PREFIX, payload)
     if not str then return nil, "LibDeflate is missing" end
@@ -108,11 +123,23 @@ function FA.ExportString()
 end
 
 function FA.DecodeString(str)
+    -- This tab's own string first, then any other aura tab's.
     local raw, err = BP.Unpack(FA.EXPORT_PREFIX, str)
+    local from
+    if not raw and err == "wrong kind of string" then
+        local trimmed = type(str) == "string" and str:gsub("%s+", "") or ""
+        for prefix, label in pairs(PREFIX_LABEL) do
+            if prefix ~= FA.EXPORT_PREFIX and trimmed:sub(1, #prefix) == prefix then
+                raw, err = BP.Unpack(prefix, trimmed)
+                from = label
+                break
+            end
+        end
+    end
     if not raw then
         if err == "wrong kind of string" then
-            err = "this is not a Profiles > ForeverAuras string (a single aura's own !FA / !WA string goes into "
-                .. "ForeverAuras' Import)"
+            err = "this is not a Profiles > " .. LABEL .. " string (a single aura's own string goes into "
+                .. LABEL .. "'s Import)"
         end
         return nil, err
     end
@@ -127,7 +154,8 @@ function FA.DecodeString(str)
         end
     end
     if count == 0 then return nil, "the string holds no auras" end
-    return { displays = displays, count = count, char = raw.char, time = raw.time, version = raw.version }
+    return { displays = displays, count = count, char = raw.char, time = raw.time,
+             version = (not from) and raw.version or nil, from = from }
 end
 
 -------------------------------------------------------------------------------
@@ -159,12 +187,12 @@ local function FreeId(id, here, taken)
     return id .. " " .. time()
 end
 
--- Writes the auras into ForeverAurasSaved.displays. Returns added, replaced,
+-- Writes the auras into <Saved>.displays. Returns added, replaced,
 -- copied, skipped (counts of auras, children included).
 function FA.Write(P, mode)
     local here = FA.Displays()
     if not here then return nil end
-    mode = mode or FA.Get("faExisting")
+    mode = mode or FA.Get(cfg.optKey)
     local added, replaced, copied, skipped = 0, 0, 0, 0
     local taken = {}
     for _, t in ipairs(FA.Plan(P).trees) do
@@ -187,7 +215,7 @@ function FA.Write(P, mode)
                 local data = P.displays[id]
                 local newId = rename[id]
                 data.id = newId
-                data.uid = nil -- ForeverAuras gives it a new one
+                data.uid = nil -- the addon gives it a new one
                 if type(data.parent) == "string" and rename[data.parent] then
                     data.parent = rename[data.parent]
                 end
@@ -219,7 +247,7 @@ local function DoExport()
         BP.Say("|cffff4040export failed:|r " .. tostring(n))
         return
     end
-    EllesmereUI:ShowCopyPopup("Export ForeverAuras",
+    EllesmereUI:ShowCopyPopup("Export " .. LABEL,
         string.format("%d auras (%d top-level) - copy the string and paste it on the other account", n, tops), str)
 end
 
@@ -227,7 +255,7 @@ local MODE_TEXT = { keep = "kept (not imported)", replace = "replaced", copy = "
 
 local function AskImport()
     if not FA.Displays() then
-        BP.Say("ForeverAuras isn't loaded.")
+        BP.Say(LABEL .. " isn't loaded.")
         return
     end
     EllesmereUI:ShowImportPopup(function(str)
@@ -238,7 +266,7 @@ local function AskImport()
         end
         local plan = FA.Plan(P)
         if not plan then return end
-        local mode = FA.Get("faExisting")
+        local mode = FA.Get(cfg.optKey)
         local names = {}
         for i, t in ipairs(plan.trees) do
             if i > 8 then
@@ -253,13 +281,17 @@ local function AskImport()
             table.concat(names, ", "))
         local warn = "|cff999999Auras can run their own code: only import strings you made yourself or trust.\n"
             .. "The UI reloads to load them.|r"
-        if P.version and _G.ForeverAuras and _G.ForeverAuras.InternalVersion
-                and P.version > _G.ForeverAuras.InternalVersion() then
-            warn = "|cffff8040Made with a newer ForeverAuras than yours: update ForeverAuras first.|r\n" .. warn
+        local mine = Version()
+        if P.version and mine and P.version > mine then
+            warn = "|cffff8040Made with a newer " .. LABEL .. " than yours: update " .. LABEL .. " first.|r\n" .. warn
+        end
+        if P.from then
+            warn = "|cffffd040Made in " .. P.from .. ": the auras are moved into " .. LABEL
+                .. ". Auras that use something only " .. P.from .. " has may need fixing.|r\n" .. warn
         end
         C_Timer.After(0, function()
             EllesmereUI:ShowConfirmPopup({
-                title = "Import ForeverAuras",
+                title = "Import " .. LABEL,
                 message = msg,
                 disclaimer = warn,
                 confirmText = "Import & Reload",
@@ -267,12 +299,12 @@ local function AskImport()
                 onConfirm = function()
                     local a, r, c, s = FA.Write(P, mode)
                     if a then
-                        BP.Say(string.format("ForeverAuras: %d added, %d replaced, %d copied, %d kept.", a, r, c, s))
+                        BP.Say(string.format("%s: %d added, %d replaced, %d copied, %d kept.", LABEL, a, r, c, s))
                     end
                 end,
             })
         end)
-    end, "Import ForeverAuras", "Paste a Profiles > ForeverAuras string below")
+    end, "Import " .. LABEL, "Paste a Profiles > " .. LABEL .. " string below")
 end
 
 FA.DoExport, FA.AskImport = DoExport, AskImport
@@ -286,14 +318,14 @@ function FA.BuildPage(parent, yOffset)
 
     local n, tops = FA.Count()
     local function off() return FA.Displays() == nil end
-    local OFF_TIP = "ForeverAuras isn't loaded."
+    local OFF_TIP = LABEL .. " isn't loaded."
 
-    _, h = W:SectionHeader(parent, "FOREVERAURAS", y);  y = y - h
+    _, h = W:SectionHeader(parent, cfg.header, y);  y = y - h
 
     -- Two full-width rows (no right half), so the long lines don't overlap.
     _, h = W:DualRow(parent, y,
         { type = "label", text = n and string.format("This account: %d top-level auras / groups, %d auras in all (group contents too)", tops, n)
-              or "|cffff4040ForeverAuras isn't loaded.|r" }
+              or ("|cffff4040" .. LABEL .. " isn't loaded.|r") }
     );  y = y - h
 
     _, h = W:DualRow(parent, y,
@@ -302,8 +334,8 @@ function FA.BuildPage(parent, yOffset)
 
     _, h = W:DualRow(parent, y,
         { type = "labeledButton", text = "Export All Auras", buttonText = "Export",
-          tooltip = "Every ForeverAuras aura and group of this account in one string. Paste it on the other account "
-              .. "with Import Auras.",
+          tooltip = "Every " .. LABEL .. " aura and group of this account in one string. Paste it on the other "
+              .. "account with Import Auras.",
           disabled = function() return off() or (FA.Count() or 0) == 0 end,
           disabledTooltip = function() return off() and OFF_TIP or "No auras to export." end, rawTooltip = true,
           onClick = DoExport },
@@ -321,10 +353,25 @@ function FA.BuildPage(parent, yOffset)
           tooltip = "An imported aura or group with a name this account already has:\n"
               .. "Keep Mine: not imported.\nReplace It: the imported one takes its place.\n"
               .. "Add as Copy: imported under a new name, \"Name (2)\".",
-          getValue = function() return FA.Get("faExisting") end,
-          setValue = function(v) FA.Set("faExisting", v) end },
+          getValue = function() return FA.Get(cfg.optKey) end,
+          setValue = function(v) FA.Set(cfg.optKey, v) end },
         BLANK()
     );  y = y - h
 
     return math.abs(y)
 end
+
+return FA
+end -- MakeAuraTab
+
+BP.FA = MakeAuraTab({
+    addon = "ForeverAuras", sv = "ForeverAurasSaved", global = "ForeverAuras",
+    label = "ForeverAuras", page = "ForeverAuras", header = "FOREVERAURAS",
+    prefix = "!EUIFA1!", optKey = "faExisting",
+})
+
+BP.SF = MakeAuraTab({
+    addon = "SparkForever", sv = "SparkForeverSaved", global = "SparkForever",
+    label = "Spark Forever", page = "Spark Forever", header = "SPARK FOREVER",
+    prefix = "!EUISF1!", optKey = "sfExisting",
+})
