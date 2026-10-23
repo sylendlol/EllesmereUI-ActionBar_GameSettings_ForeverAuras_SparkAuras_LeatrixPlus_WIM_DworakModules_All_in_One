@@ -1,11 +1,11 @@
 # EllesmereUI Profiles (Action Bars, Game Settings, ForeverAuras, Spark Forever, Leatrix+ , WIM, Dworak Modules)
+# !!! You need to import the EllesmereUI profile with the original importer at "Profiles & Presets" / "Import Profile and the Edit Mode with the Blizzard importer, and after that use this "Dworak" "Profiles" importer !!!
 
-<img width="1362" height="993" alt="image" src="https://github.com/user-attachments/assets/b1569303-df1c-4574-9e5e-9e84593ae480" />
-<img width="1375" height="997" alt="image" src="https://github.com/user-attachments/assets/a0fff417-e381-4dd1-8728-1f3dd155833c" />
-<img width="1379" height="991" alt="image" src="https://github.com/user-attachments/assets/94adfc7f-4b5e-44eb-bfba-61624ce1c0aa" />
-<img width="1369" height="996" alt="image" src="https://github.com/user-attachments/assets/7b9b0a87-b11d-4276-bf35-c803a89cbe3e" />
-<img width="1373" height="993" alt="image" src="https://github.com/user-attachments/assets/ea316987-e10e-4b76-b18d-99547716a457" />
-<img width="1391" height="1002" alt="image" src="https://github.com/user-attachments/assets/2baffcda-8064-438e-a0c9-4724f5857148" />
+<img width="1376" height="990" alt="image" src="https://github.com/user-attachments/assets/ab09faa3-2233-4a94-a3ef-32b2605a2854" />
+<img width="1369" height="998" alt="image" src="https://github.com/user-attachments/assets/1fea56f0-08bd-461b-a3ce-40ddeee1f83c" />
+<img width="1375" height="996" alt="image" src="https://github.com/user-attachments/assets/c465f6cc-cae0-4976-a5ef-af6f48792716" />
+<img width="1365" height="995" alt="image" src="https://github.com/user-attachments/assets/9dd92329-475c-46f1-8cb4-a7bc2372af41" />
+
 
 
 Save your setup once and load it on any other character or account: action bars, macros and key bindings, the game's own settings, all your ForeverAuras and Spark Forever auras, your Leatrix Plus and WIM settings, and the settings of the other Dworak modules.
@@ -24,6 +24,7 @@ The module lives under **EllesmereUI → Dworak → Profiles** and has seven tab
 | **Leatrix Plus** | Every Leatrix Plus setting of the account, in one go |
 | **WIM** | WIM (WoW Instant Messenger) settings, filters, aliases and, if you want, conversation history |
 | **Dworak Modules** | The settings of the Dworak modules you tick (Ammo Counter, Bag Cleaner, Loot Tracker, ...) |
+| **All in Ones** | All settings with 1 string. Expect EUI profiles and Edit Mode!!|
 
 ## Why
 
