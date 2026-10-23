@@ -1,4 +1,4 @@
-# EllesmereUI Profiles (Action Bars, Game Settings, ForeverAuras, Spark Forever, Leatrix+ , WIM, Dworak Modules)
+# EllesmereUI Profiles (Action Bars, Game Settings, ForeverAuras, Spark Forever, Leatrix+ , WIM, Dworak Modules, All in One)
 # !!! You need to import the EllesmereUI profile with the original importer at "Profiles & Presets" / "Import Profile and the Edit Mode with the Blizzard importer, and after that use this "Dworak" "Profiles" importer !!!
 
 <img width="1376" height="990" alt="image" src="https://github.com/user-attachments/assets/ab09faa3-2233-4a94-a3ef-32b2605a2854" />
